@@ -1,0 +1,57 @@
+﻿@model Instructor
+@{
+    ViewData["Title"] = "Instructor Details";
+    var labelStyle = "font-size:var(--text-xs);font-weight:var(--weight-semibold);text-transform:uppercase;letter-spacing:var(--tracking-wider);color:var(--text-muted);margin-bottom:var(--space-1);";
+    var valueStyle = "font-size:var(--text-base);color:var(--text-primary);margin:0;";
+}
+
+<nav aria-label="breadcrumb" style="margin-bottom:var(--space-4);">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Instructors</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.InsName</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div class="page-header__meta">
+        <h1 class="page-title">Instructor Details</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Profile, assignment and salary information.</p>
+    </div>
+    <div class="page-header__actions">
+        <a class="btn btn-secondary" asp-action="Index">Back to list</a>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px;">
+    <div class="card-header">
+        <div style="display:flex;align-items:center;gap:var(--space-4);">
+            <div class="avatar avatar-xl avatar--primary">
+                @(string.IsNullOrEmpty(Model.InsName) ? "?" : Model.InsName.Substring(0, 1).ToUpper())
+            </div>
+            <div>
+                <h2 class="card-title" style="font-size:var(--text-xl);">@Model.InsName</h2>
+                <p class="card-subtitle">@Model.Department.Name</p>
+            </div>
+        </div>
+        <span class="badge badge-neutral">ID @Model.Id</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-6);">
+        <div>
+            <div style="@labelStyle">Department</div>
+            <p style="@valueStyle">@Model.Department.Name</p>
+        </div>
+        <div>
+            <div style="@labelStyle">Course</div>
+            <span class="badge badge-accent">@Model.Course.Name</span>
+        </div>
+        <div>
+            <div style="@labelStyle">Salary</div>
+            <p style="@valueStyle">@Model.Salary.ToString("N2")</p>
+        </div>
+        <div>
+            <div style="@labelStyle">Address</div>
+            <p style="@valueStyle">@(string.IsNullOrWhiteSpace(Model.Address) ? "—" : Model.Address)</p>
+        </div>
+    </div>
+</div>

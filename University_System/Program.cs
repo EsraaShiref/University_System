@@ -1,3 +1,5 @@
+using University_System.Data;
+
 namespace University_System
 {
     public class Program
@@ -8,6 +10,7 @@ namespace University_System
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.AddDbContext<AppDbContext>();
 
             var app = builder.Build();
 
@@ -27,7 +30,7 @@ namespace University_System
             app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
+                pattern: "{controller=Dashboard}/{action=Index}/{id?}")
                 .WithStaticAssets();
 
             app.Run();

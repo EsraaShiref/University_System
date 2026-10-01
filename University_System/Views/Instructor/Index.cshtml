@@ -1,0 +1,65 @@
+﻿@model List<Instructor>
+@{
+    ViewData["Title"] = "Instructors";
+}
+
+<div class="page-header">
+    <div class="page-header__meta">
+        <h1 class="page-title">Instructors</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Browse all instructors, their departments and courses.</p>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <div class="table-toolbar">
+        <span class="table-toolbar__title">All Instructors</span>
+        <span class="badge badge-primary">@Model.Count total</span>
+    </div>
+
+    @if (Model.Any())
+    {
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Course</th>
+                    <th>Salary</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var i in Model)
+                {
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:var(--space-3);">
+                                <div class="avatar avatar-md avatar--primary">
+                                    @(string.IsNullOrEmpty(i.InsName) ? "?" : i.InsName.Substring(0, 1).ToUpper())
+                                </div>
+                                <span style="font-weight:var(--weight-medium);">@i.InsName</span>
+                            </div>
+                        </td>
+                        <td>@i.Department.Name</td>
+                        <td><span class="badge badge-accent">@i.Course.Name</span></td>
+                        <td>@i.Salary.ToString("N2")</td>
+                        <td style="text-align:right;">
+                            <a class="btn btn-outline-primary btn-sm" asp-action="Details" asp-route-id="@i.Id">Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="table-footer">
+            <span class="table-footer__count">Showing @Model.Count instructors</span>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <h3 class="empty-state__title">No instructors found</h3>
+            <p class="empty-state__description">There are no instructors in the database yet.</p>
+        </div>
+    }
+</div>
