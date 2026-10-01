@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using University_System.Data;
-using University_System.Models.ViewModels;
+using University_System.ViewModels;
 
 namespace University_System.Controllers
 {

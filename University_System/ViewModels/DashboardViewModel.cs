@@ -1,4 +1,6 @@
-namespace University_System.Models.ViewModels
+using University_System.Models;
+
+namespace University_System.ViewModels
 {
     public class DashboardViewModel
     {
