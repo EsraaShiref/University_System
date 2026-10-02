@@ -1,0 +1,60 @@
+@model List<University_System.ViewModels.DepartmentListItemViewModel>
+@{
+    ViewData["Title"] = "Departments";
+}
+
+<div class="page-header">
+    <div class="page-header__meta">
+        <h1 class="page-title">Departments</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Browse all departments and their managers.</p>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <div class="table-toolbar">
+        <span class="table-toolbar__title">All Departments</span>
+        <span class="badge badge-primary">@Model.Count total</span>
+    </div>
+
+    @if (Model.Any())
+    {
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th>Manager</th>
+                    <th>Instructors</th>
+                    <th>Courses</th>
+                    <th>Students</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model)
+                {
+                    <tr>
+                        <td style="font-weight:var(--weight-medium);">@d.Name</td>
+                        <td>@d.Manager</td>
+                        <td><span class="badge badge-success">@d.InstructorsCount</span></td>
+                        <td><span class="badge badge-accent">@d.CoursesCount</span></td>
+                        <td><span class="badge badge-primary">@d.TraineesCount</span></td>
+                        <td style="text-align:right;">
+                            <a class="btn btn-outline-primary btn-sm" asp-action="Details" asp-route-id="@d.Id">Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="table-footer">
+            <span class="table-footer__count">Showing @Model.Count departments</span>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <h3 class="empty-state__title">No departments found</h3>
+            <p class="empty-state__description">There are no departments in the database yet.</p>
+        </div>
+    }
+</div>

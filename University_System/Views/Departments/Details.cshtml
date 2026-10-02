@@ -1,0 +1,121 @@
+@model University_System.ViewModels.DepartmentDetailsViewModel
+@{
+    ViewData["Title"] = "Department Details";
+    var d = Model.Department;
+    var labelStyle = "font-size:var(--text-xs);font-weight:var(--weight-semibold);text-transform:uppercase;letter-spacing:var(--tracking-wider);color:var(--text-muted);margin-bottom:var(--space-1);";
+    var valueStyle = "font-size:var(--text-base);color:var(--text-primary);margin:0;";
+}
+
+<nav aria-label="breadcrumb" style="margin-bottom:var(--space-4);">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Departments</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@d.Name</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div class="page-header__meta">
+        <h1 class="page-title">Department Details</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Manager, instructors, courses and students.</p>
+    </div>
+    <div class="page-header__actions">
+        <a class="btn btn-secondary" asp-action="Index">Back to list</a>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px;margin-bottom:var(--space-6);">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title" style="font-size:var(--text-xl);">@d.Name</h2>
+            <p class="card-subtitle">Managed by @d.Manager</p>
+        </div>
+        <span class="badge badge-neutral">ID @d.Id</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--space-6);">
+        <div>
+            <div style="@labelStyle">Manager</div>
+            <p style="@valueStyle">@d.Manager</p>
+        </div>
+        <div>
+            <div style="@labelStyle">Instructors</div>
+            <p style="@valueStyle">@Model.Instructors.Count</p>
+        </div>
+        <div>
+            <div style="@labelStyle">Courses</div>
+            <p style="@valueStyle">@Model.Courses.Count</p>
+        </div>
+        <div>
+            <div style="@labelStyle">Students</div>
+            <p style="@valueStyle">@Model.Trainees.Count</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="table-wrapper">
+            <div class="table-toolbar"><span class="table-toolbar__title">Instructors</span></div>
+            @if (Model.Instructors.Any())
+            {
+                <table class="table table-hover">
+                    <thead><tr><th>Name</th></tr></thead>
+                    <tbody>
+                        @foreach (var i in Model.Instructors)
+                        {
+                            <tr><td><a asp-controller="Instructor" asp-action="Details" asp-route-id="@i.Id">@i.InsName</a></td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state"><p class="empty-state__description">No instructors.</p></div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="table-wrapper">
+            <div class="table-toolbar"><span class="table-toolbar__title">Courses</span></div>
+            @if (Model.Courses.Any())
+            {
+                <table class="table table-hover">
+                    <thead><tr><th>Course</th></tr></thead>
+                    <tbody>
+                        @foreach (var c in Model.Courses)
+                        {
+                            <tr><td><a asp-controller="Courses" asp-action="Details" asp-route-id="@c.Id">@c.Name</a></td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state"><p class="empty-state__description">No courses.</p></div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="table-wrapper">
+            <div class="table-toolbar"><span class="table-toolbar__title">Students</span></div>
+            @if (Model.Trainees.Any())
+            {
+                <table class="table table-hover">
+                    <thead><tr><th>Name</th></tr></thead>
+                    <tbody>
+                        @foreach (var t in Model.Trainees)
+                        {
+                            <tr><td><a asp-controller="Students" asp-action="Details" asp-route-id="@t.Id">@t.Name</a></td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state"><p class="empty-state__description">No students.</p></div>
+            }
+        </div>
+    </div>
+</div>

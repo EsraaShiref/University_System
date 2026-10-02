@@ -1,0 +1,65 @@
+@model List<Trainee>
+@{
+    ViewData["Title"] = "Students";
+}
+
+<div class="page-header">
+    <div class="page-header__meta">
+        <h1 class="page-title">Students</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Browse all enrolled trainees and their departments.</p>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <div class="table-toolbar">
+        <span class="table-toolbar__title">All Students</span>
+        <span class="badge badge-primary">@Model.Count total</span>
+    </div>
+
+    @if (Model.Any())
+    {
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Grade</th>
+                    <th>Address</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model)
+                {
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:var(--space-3);">
+                                <div class="avatar avatar-md avatar--primary">
+                                    @(string.IsNullOrEmpty(t.Name) ? "?" : t.Name.Substring(0, 1).ToUpper())
+                                </div>
+                                <span style="font-weight:var(--weight-medium);">@t.Name</span>
+                            </div>
+                        </td>
+                        <td><span class="badge badge-primary">@t.Department.Name</span></td>
+                        <td>@t.Grade</td>
+                        <td>@t.Address</td>
+                        <td style="text-align:right;">
+                            <a class="btn btn-outline-primary btn-sm" asp-action="Details" asp-route-id="@t.Id">Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="table-footer">
+            <span class="table-footer__count">Showing @Model.Count students</span>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <h3 class="empty-state__title">No students found</h3>
+            <p class="empty-state__description">There are no students in the database yet.</p>
+        </div>
+    }
+</div>

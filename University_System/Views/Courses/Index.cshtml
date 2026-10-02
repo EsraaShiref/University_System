@@ -1,0 +1,60 @@
+@model List<Course>
+@{
+    ViewData["Title"] = "Courses";
+}
+
+<div class="page-header">
+    <div class="page-header__meta">
+        <h1 class="page-title">Courses</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Browse all courses, their departments and passing degrees.</p>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <div class="table-toolbar">
+        <span class="table-toolbar__title">All Courses</span>
+        <span class="badge badge-primary">@Model.Count total</span>
+    </div>
+
+    @if (Model.Any())
+    {
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Department</th>
+                    <th>Degree</th>
+                    <th>Min Degree</th>
+                    <th>Instructors</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td style="font-weight:var(--weight-medium);">@c.Name</td>
+                        <td>@c.Department.Name</td>
+                        <td>@c.Degree</td>
+                        <td>@c.MinDegree</td>
+                        <td><span class="badge badge-accent">@c.Instructors.Count</span></td>
+                        <td style="text-align:right;">
+                            <a class="btn btn-outline-primary btn-sm" asp-action="Details" asp-route-id="@c.Id">Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="table-footer">
+            <span class="table-footer__count">Showing @Model.Count courses</span>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <h3 class="empty-state__title">No courses found</h3>
+            <p class="empty-state__description">There are no courses in the database yet.</p>
+        </div>
+    }
+</div>
