@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using University_System.Data;
 
 namespace University_System
@@ -11,10 +10,16 @@ namespace University_System
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
-            builder.Services.AddSession((Options =>
+
+            // Session needs a backing store; in-memory is fine for development.
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
             {
-                Options.IdleTimeout = TimeSpan.FromMinutes(45);
-            }));
+                options.IdleTimeout = TimeSpan.FromMinutes(45);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
             builder.Services.AddDbContext<AppDbContext>();
 
             var app = builder.Build();
