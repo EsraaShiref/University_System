@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using University_System.Data;
 using University_System.ViewModels;
 
@@ -39,9 +40,21 @@ namespace University_System.Controllers
             return View(new DepartmentDetailsViewModel
             {
                 Department = department,
-                Instructors = _context.Instructors.Where(i => i.DepartmentId == id).ToList(),
-                Courses = _context.Courses.Where(c => c.DepartmentId == id).ToList(),
-                Trainees = _context.Trainees.Where(t => t.DepartmentId == id).ToList()
+                Instructors = _context.Instructors
+                    .Include(i => i.Course)
+                    .Where(i => i.DepartmentId == id)
+                    .OrderBy(i => i.InsName)
+                    .ToList(),
+                Courses = _context.Courses
+                    .Include(c => c.Instructors)
+                    .Include(c => c.courseResults)
+                    .Where(c => c.DepartmentId == id)
+                    .OrderBy(c => c.Name)
+                    .ToList(),
+                Trainees = _context.Trainees
+                    .Where(t => t.DepartmentId == id)
+                    .OrderBy(t => t.Name)
+                    .ToList()
             });
         }
     }
