@@ -5,7 +5,7 @@ namespace University_System.Models
     public class Instructor
     {
         public int Id { get; set; }
-        public string InsName { get; set; }
+        public string InsName { get; set; } = null!;
         public string? Img { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
@@ -14,10 +14,10 @@ namespace University_System.Models
 
         [ForeignKey("Department")]
         public int DepartmentId { get; set; }
-        public Department Department { get; set; }
+        public Department Department { get; set; } = null!;
 
         [ForeignKey("Course")]
         public int CourseId { get; set; }
-        public Course Course { get; set; }
+        public Course Course { get; set; } = null!;
     }
 }

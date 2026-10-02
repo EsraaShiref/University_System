@@ -9,12 +9,10 @@ namespace University_System.Models
 
         [ForeignKey("Course")]
         public int CourseId { get; set; }
-        public Course Course { get; set; }
+        public Course Course { get; set; } = null!;
 
         [ForeignKey("Trainee")]
         public int TraineeId { get; set; }
-        public Trainee Trainee { get; set; }
-
-
+        public Trainee Trainee { get; set; } = null!;
     }
 }

@@ -5,7 +5,7 @@ namespace University_System.Models
     public class Course
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
         public int Degree { get; set; }
         public int MinDegree { get; set; }
         public ICollection<Instructor> Instructors { get; set; } = new List<Instructor>();
@@ -14,6 +14,6 @@ namespace University_System.Models
         [ForeignKey("Department")]
         public int DepartmentId { get; set; }
 
-        public Department Department { get; set; }
+        public Department Department { get; set; } = null!;
     }
 }
