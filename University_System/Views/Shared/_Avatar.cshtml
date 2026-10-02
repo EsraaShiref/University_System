@@ -1,0 +1,19 @@
+@model University_System.ViewModels.AvatarViewModel
+@{
+    var initial = string.IsNullOrWhiteSpace(Model.Name) ? "?" : Model.Name.Trim().Substring(0, 1).ToUpper();
+    var hasImage = !string.IsNullOrWhiteSpace(Model.FileName);
+}
+<div class="avatar @Model.Size avatar--primary">
+    @if (hasImage)
+    {
+        <img src="@Url.Content($"~/images/{Model.Folder}/{Model.FileName}")"
+             alt="@Model.Name"
+             data-initial="@initial"
+             style="width:100%;height:100%;object-fit:cover;"
+             onerror="this.replaceWith(document.createTextNode(this.dataset.initial));" />
+    }
+    else
+    {
+        @initial
+    }
+</div>

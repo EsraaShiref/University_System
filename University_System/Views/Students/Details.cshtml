@@ -26,9 +26,7 @@
 <div class="card" style="max-width:760px;margin-bottom:var(--space-6);">
     <div class="card-header">
         <div style="display:flex;align-items:center;gap:var(--space-4);">
-            <div class="avatar avatar-xl avatar--primary">
-                @(string.IsNullOrEmpty(t.Name) ? "?" : t.Name.Substring(0, 1).ToUpper())
-            </div>
+            <partial name="_Avatar" model='new AvatarViewModel { Name = t.Name, FileName = t.Image, Folder = "trainees", Size = "avatar-xl" }' />
             <div>
                 <h2 class="card-title" style="font-size:var(--text-xl);">@t.Name</h2>
                 <p class="card-subtitle">@t.Department.Name</p>

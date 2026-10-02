@@ -34,9 +34,7 @@
                     <tr>
                         <td>
                             <div style="display:flex;align-items:center;gap:var(--space-3);">
-                                <div class="avatar avatar-md avatar--primary">
-                                    @(string.IsNullOrEmpty(t.Name) ? "?" : t.Name.Substring(0, 1).ToUpper())
-                                </div>
+                                <partial name="_Avatar" model='new AvatarViewModel { Name = t.Name, FileName = t.Image, Folder = "trainees", Size = "avatar-md" }' />
                                 <span style="font-weight:var(--weight-medium);">@t.Name</span>
                             </div>
                         </td>
