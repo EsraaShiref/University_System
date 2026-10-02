@@ -12,7 +12,7 @@
 
 <body>
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="appSidebar">
         <a class="sidebar-brand" asp-controller="Dashboard" asp-action="Index">
             <div class="sidebar-brand__icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="white">
@@ -94,9 +94,17 @@
         </div>
     </aside>
 
+    <!-- Backdrop for the mobile sidebar -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
     <!-- Main -->
     <div class="main-content">
         <header class="topbar">
+            <button type="button" class="topbar-menu-btn" id="sidebarToggle" aria-label="Toggle navigation menu" aria-controls="appSidebar" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+            </button>
             <span style="font-size:var(--text-sm);color:var(--text-muted);">
                 @ViewData["Title"]
             </span>

@@ -2503,3 +2503,91 @@ table.table {
         transition-duration: 0.01ms !important;
     }
 }
+
+
+/* ==========================================================================
+   19. RESPONSIVE FIXES (mobile sidebar, backdrop, scrollable tables)
+   ========================================================================== */
+
+/* Hamburger button in the topbar - hidden on desktop */
+.topbar-menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+    .topbar-menu-btn:hover {
+        background: var(--surface-overlay);
+    }
+
+    .topbar-menu-btn svg {
+        width: 22px;
+        height: 22px;
+    }
+
+/* Dark backdrop behind the open mobile sidebar */
+.sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    /* The entrance animation ends with transform: translateX(0) and fill-mode "both",
+       which overrides the translateX(-100%) above and kept the sidebar on screen. */
+    .sidebar {
+        animation: none;
+        opacity: 1;
+    }
+
+        .sidebar:not(.is-open) {
+            box-shadow: none;
+        }
+
+    .topbar {
+        padding: 0 var(--space-4);
+    }
+
+    .topbar-menu-btn {
+        display: inline-flex;
+    }
+
+    .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 16, 40, 0.55);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+        z-index: 150; /* above the topbar (100), below the sidebar (200) */
+    }
+
+    body.sidebar-open .sidebar-backdrop {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    body.sidebar-open {
+        overflow: hidden;
+    }
+}
+
+/* Tables: scroll sideways instead of being cut off */
+@media (max-width: 767.98px) {
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+        .table-wrapper .table {
+            min-width: 620px;
+        }
+}
