@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using University_System.Data;
+using University_System.Helpers;
+using University_System.Models;
 using University_System.ViewModels;
 
 namespace University_System.Controllers
 {
     public class DepartmentsController : Controller
     {
+        private const int PageSize = 10;
         private readonly AppDbContext _context;
 
         public DepartmentsController(AppDbContext context)
@@ -14,10 +17,19 @@ namespace University_System.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        // GET: /Departments?q=...&page=2
+        public async Task<IActionResult> Index(string? q, int page = 1)
         {
-            var departments = _context.Departments
-                .OrderBy(d => d.Id)
+            var query = _context.Departments.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                q = q.Trim();
+                query = query.Where(d => d.Name.Contains(q) || d.Manager.Contains(q));
+            }
+
+            var projected = query
+                .OrderBy(d => d.Name).ThenBy(d => d.Id)
                 .Select(d => new DepartmentListItemViewModel
                 {
                     Id = d.Id,
@@ -26,36 +38,99 @@ namespace University_System.Controllers
                     InstructorsCount = _context.Instructors.Count(i => i.DepartmentId == d.Id),
                     CoursesCount = _context.Courses.Count(c => c.DepartmentId == d.Id),
                     TraineesCount = _context.Trainees.Count(t => t.DepartmentId == d.Id)
-                })
-                .ToList();
+                });
 
-            return View(departments);
+            ViewData["q"] = q;
+            return View(await PaginatedList<DepartmentListItemViewModel>.CreateAsync(projected, page, PageSize));
         }
 
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var department = _context.Departments.FirstOrDefault(d => d.Id == id);
+            var department = await _context.Departments.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id);
             if (department == null) return NotFound();
 
             return View(new DepartmentDetailsViewModel
             {
                 Department = department,
-                Instructors = _context.Instructors
+                Instructors = await _context.Instructors.AsNoTracking()
                     .Include(i => i.Course)
                     .Where(i => i.DepartmentId == id)
                     .OrderBy(i => i.InsName)
-                    .ToList(),
-                Courses = _context.Courses
+                    .ToListAsync(),
+                Courses = await _context.Courses.AsNoTracking()
                     .Include(c => c.Instructors)
                     .Include(c => c.courseResults)
                     .Where(c => c.DepartmentId == id)
                     .OrderBy(c => c.Name)
-                    .ToList(),
-                Trainees = _context.Trainees
+                    .ToListAsync(),
+                Trainees = await _context.Trainees.AsNoTracking()
                     .Where(t => t.DepartmentId == id)
                     .OrderBy(t => t.Name)
-                    .ToList()
+                    .ToListAsync()
             });
+        }
+
+        public IActionResult Create() => View("Form", new DepartmentFormViewModel());
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(DepartmentFormViewModel vm)
+        {
+            if (!ModelState.IsValid) return View("Form", vm);
+
+            var entity = new Department { Name = vm.Name.Trim(), Manager = vm.Manager.Trim() };
+            _context.Departments.Add(entity);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Department \"{entity.Name}\" was created.";
+            return RedirectToAction(nameof(Details), new { id = entity.Id });
+        }
+
+        public async Task<IActionResult> Edit(int id)
+        {
+            var d = await _context.Departments.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            if (d == null) return NotFound();
+
+            return View("Form", new DepartmentFormViewModel { Id = d.Id, Name = d.Name, Manager = d.Manager });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, DepartmentFormViewModel vm)
+        {
+            if (id != vm.Id) return BadRequest();
+            if (!ModelState.IsValid) return View("Form", vm);
+
+            var d = await _context.Departments.FindAsync(id);
+            if (d == null) return NotFound();
+
+            d.Name = vm.Name.Trim();
+            d.Manager = vm.Manager.Trim();
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Department \"{d.Name}\" was updated.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var d = await _context.Departments.FindAsync(id);
+            if (d == null) return NotFound();
+
+            var inUse = await _context.Instructors.AnyAsync(i => i.DepartmentId == id)
+                     || await _context.Courses.AnyAsync(c => c.DepartmentId == id)
+                     || await _context.Trainees.AnyAsync(t => t.DepartmentId == id);
+
+            if (inUse)
+            {
+                TempData["Error"] = $"\"{d.Name}\" cannot be deleted because it still has instructors, courses or students.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _context.Departments.Remove(d);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Department \"{d.Name}\" was deleted.";
+            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -33,6 +33,7 @@ namespace University_System
             }
 
             app.UseHttpsRedirection();
+            app.UseStaticFiles(); // serves images uploaded while the app is running
             app.UseRouting();
             app.UseSession();
 

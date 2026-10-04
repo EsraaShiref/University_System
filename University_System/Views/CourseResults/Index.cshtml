@@ -1,0 +1,83 @@
+@model University_System.Helpers.PaginatedList<CourseResult>
+@{
+    ViewData["Title"] = "Course Results";
+    var q = ViewData["q"] as string;
+    var status = ViewData["status"] as string;
+    var filtered = !string.IsNullOrWhiteSpace(q) || !string.IsNullOrEmpty(status);
+    var first = Model.Count == 0 ? 0 : (Model.PageIndex - 1) * Model.PageSize + 1;
+    var last = first + Model.Count - 1;
+}
+
+<div class="page-header">
+    <div class="page-header__meta">
+        <h1 class="page-title">Course Results</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Search, add, edit and remove trainee results.</p>
+    </div>
+    <div class="page-header__actions">
+        <a class="btn btn-primary" asp-action="Create">Add Result</a>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <div class="table-toolbar">
+        <span class="table-toolbar__title">All Course Results</span>
+        <span class="badge badge-primary">@Model.TotalCount total</span>
+    </div>
+
+    <form method="get" asp-action="Index" class="list-filters">
+        <input type="search" name="q" value="@q" class="form-control" placeholder="Search by student or course…" />
+        <select name="status" class="form-select">
+            <option value="">All results</option>
+            <option value="passed" selected="@(status == "passed")">Passed</option>
+            <option value="failed" selected="@(status == "failed")">Failed</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Search</button>
+        @if (filtered)
+        {
+            <a class="btn btn-secondary" asp-action="Index">Clear</a>
+        }
+    </form>
+
+    @if (Model.Count > 0)
+    {
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Course</th>
+                    <th>Degree</th>
+                    <th>Status</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td><a asp-controller="Students" asp-action="Details" asp-route-id="@r.TraineeId" style="font-weight:var(--weight-medium);">@r.Trainee.Name</a></td>
+                        <td><a asp-controller="Courses" asp-action="Details" asp-route-id="@r.CourseId">@r.Course.Name</a></td>
+                        <td>@r.Degree / @r.Course.Degree</td>
+                        <td>@if (r.Degree >= r.Course.MinDegree) { <span class="badge badge-success">Passed</span> } else { <span class="badge badge-danger">Failed</span> }</td>
+                        <td style="text-align:right;white-space:nowrap;">
+                            <a class="btn btn-outline-primary btn-sm" asp-action="Details" asp-route-id="@r.Id">Details</a>
+                            <a class="btn btn-secondary btn-sm" asp-action="Edit" asp-route-id="@r.Id">Edit</a>
+                            <button type="button" class="btn btn-danger btn-sm" data-delete-url="@Url.Action("Delete", new { id = r.Id })">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="table-footer">
+            <span class="table-footer__count">Showing @(first)&ndash;@(last) of @Model.TotalCount</span>
+            <partial name="_Pagination" model="Model" />
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <h3 class="empty-state__title">@(filtered ? "No matching results" : "No results yet")</h3>
+            <p class="empty-state__description">@(filtered ? "Try a different search or clear the filters." : "Use the button above to add the first one.")</p>
+        </div>
+    }
+</div>

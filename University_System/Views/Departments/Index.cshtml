@@ -1,22 +1,38 @@
-@model List<University_System.ViewModels.DepartmentListItemViewModel>
+@model University_System.Helpers.PaginatedList<University_System.ViewModels.DepartmentListItemViewModel>
 @{
     ViewData["Title"] = "Departments";
+    var q = ViewData["q"] as string;
+    var filtered = !string.IsNullOrWhiteSpace(q);
+    var first = Model.Count == 0 ? 0 : (Model.PageIndex - 1) * Model.PageSize + 1;
+    var last = first + Model.Count - 1;
 }
 
 <div class="page-header">
     <div class="page-header__meta">
         <h1 class="page-title">Departments</h1>
-        <p class="page-subtitle" style="margin-bottom:0;">Browse all departments and their managers.</p>
+        <p class="page-subtitle" style="margin-bottom:0;">Search, add, edit and remove departments.</p>
+    </div>
+    <div class="page-header__actions">
+        <a class="btn btn-primary" asp-action="Create">Add Department</a>
     </div>
 </div>
 
 <div class="table-wrapper">
     <div class="table-toolbar">
         <span class="table-toolbar__title">All Departments</span>
-        <span class="badge badge-primary">@Model.Count total</span>
+        <span class="badge badge-primary">@Model.TotalCount total</span>
     </div>
 
-    @if (Model.Any())
+    <form method="get" asp-action="Index" class="list-filters">
+        <input type="search" name="q" value="@q" class="form-control" placeholder="Search by department or manager…" />
+        <button type="submit" class="btn btn-primary">Search</button>
+        @if (filtered)
+        {
+            <a class="btn btn-secondary" asp-action="Index">Clear</a>
+        }
+    </form>
+
+    @if (Model.Count > 0)
     {
         <table class="table table-hover">
             <thead>
@@ -33,13 +49,15 @@
                 @foreach (var d in Model)
                 {
                     <tr>
-                        <td style="font-weight:var(--weight-medium);">@d.Name</td>
+                        <td><span style="font-weight:var(--weight-medium);">@d.Name</span></td>
                         <td>@d.Manager</td>
                         <td><span class="badge badge-success">@d.InstructorsCount</span></td>
                         <td><span class="badge badge-accent">@d.CoursesCount</span></td>
                         <td><span class="badge badge-primary">@d.TraineesCount</span></td>
-                        <td style="text-align:right;">
+                        <td style="text-align:right;white-space:nowrap;">
                             <a class="btn btn-outline-primary btn-sm" asp-action="Details" asp-route-id="@d.Id">Details</a>
+                            <a class="btn btn-secondary btn-sm" asp-action="Edit" asp-route-id="@d.Id">Edit</a>
+                            <button type="button" class="btn btn-danger btn-sm" data-delete-url="@Url.Action("Delete", new { id = d.Id })">Delete</button>
                         </td>
                     </tr>
                 }
@@ -47,14 +65,15 @@
         </table>
 
         <div class="table-footer">
-            <span class="table-footer__count">Showing @Model.Count departments</span>
+            <span class="table-footer__count">Showing @(first)&ndash;@(last) of @Model.TotalCount</span>
+            <partial name="_Pagination" model="Model" />
         </div>
     }
     else
     {
         <div class="empty-state">
-            <h3 class="empty-state__title">No departments found</h3>
-            <p class="empty-state__description">There are no departments in the database yet.</p>
+            <h3 class="empty-state__title">@(filtered ? "No matching results" : "No departments yet")</h3>
+            <p class="empty-state__description">@(filtered ? "Try a different search or clear the filters." : "Use the button above to add the first one.")</p>
         </div>
     }
 </div>

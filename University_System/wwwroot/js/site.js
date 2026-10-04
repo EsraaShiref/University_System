@@ -30,3 +30,19 @@
         if (e.matches) setOpen(false);
     });
 })();
+
+// Delete confirmation: any element with data-delete-url opens the shared modal
+// (Views/Shared/_DeleteModal.cshtml) and points its form at that URL.
+(function () {
+    document.addEventListener('click', function (e) {
+        const trigger = e.target.closest('[data-delete-url]');
+        if (!trigger) return;
+
+        const form = document.getElementById('deleteForm');
+        const modalEl = document.getElementById('deleteModal');
+        if (!form || !modalEl || typeof bootstrap === 'undefined') return;
+
+        form.action = trigger.dataset.deleteUrl;
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+})();

@@ -1,0 +1,59 @@
+@model University_System.ViewModels.CourseResultFormViewModel
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Add Result" : "Edit Result";
+    var trainees = (SelectList)ViewData["Trainees"]!;
+    var courses = (SelectList)ViewData["Courses"]!;
+}
+
+<nav aria-label="breadcrumb" style="margin-bottom:var(--space-4);">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Course Results</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@(isNew ? "Add" : "Edit")</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div class="page-header__meta">
+        <h1 class="page-title">@ViewData["Title"]</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Record a trainee's degree in a course. Each trainee can have one result per course.</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px;">
+    <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? (int?)null : Model.Id)" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:var(--space-4);"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 var(--space-6);">
+            <div class="form-group">
+                <label asp-for="TraineeId" class="form-label"></label>
+                <select asp-for="TraineeId" asp-items="trainees" class="form-select">
+                    <option value="">Select a trainee…</option>
+                </select>
+                <span asp-validation-for="TraineeId" class="text-danger" style="font-size:var(--text-sm);"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CourseId" class="form-label"></label>
+                <select asp-for="CourseId" asp-items="courses" class="form-select">
+                    <option value="">Select a course…</option>
+                </select>
+                <span asp-validation-for="CourseId" class="text-danger" style="font-size:var(--text-sm);"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Degree" class="form-label"></label>
+                <input asp-for="Degree" class="form-control" />
+                <span asp-validation-for="Degree" class="text-danger" style="font-size:var(--text-sm);"></span>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;margin-top:var(--space-2);">
+            <button type="submit" class="btn btn-primary">@(isNew ? "Create" : "Save changes")</button>
+            <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

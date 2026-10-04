@@ -1,0 +1,48 @@
+@model University_System.ViewModels.DepartmentFormViewModel
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Add Department" : "Edit Department";
+}
+
+<nav aria-label="breadcrumb" style="margin-bottom:var(--space-4);">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Departments</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@(isNew ? "Add" : "Edit")</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div class="page-header__meta">
+        <h1 class="page-title">@ViewData["Title"]</h1>
+        <p class="page-subtitle" style="margin-bottom:0;">Enter the department name and its manager.</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px;">
+    <form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@(isNew ? (int?)null : Model.Id)" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:var(--space-4);"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 var(--space-6);">
+            <div class="form-group">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger" style="font-size:var(--text-sm);"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Manager" class="form-label"></label>
+                <input asp-for="Manager" class="form-control" />
+                <span asp-validation-for="Manager" class="text-danger" style="font-size:var(--text-sm);"></span>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;margin-top:var(--space-2);">
+            <button type="submit" class="btn btn-primary">@(isNew ? "Create" : "Save changes")</button>
+            <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,56 @@
+@using Microsoft.AspNetCore.Routing
+@model University_System.Helpers.IPagedList
+
+@if (Model.TotalPages > 1)
+{
+    // Keep every current query-string value (search text, filters) and only change "page"
+    var query = Context.Request.Query
+        .Where(kv => !string.Equals(kv.Key, "page", StringComparison.OrdinalIgnoreCase))
+        .ToDictionary(kv => kv.Key, kv => (object?)kv.Value.ToString());
+
+    string PageUrl(int p)
+    {
+        var values = new RouteValueDictionary(query) { ["page"] = p };
+        return Url.Action(action: null, controller: null, values: values) ?? "#";
+    }
+
+    var start = Math.Max(1, Model.PageIndex - 2);
+    var end = Math.Min(Model.TotalPages, Model.PageIndex + 2);
+
+    <nav aria-label="Pagination">
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item @(Model.PageIndex <= 1 ? "disabled" : "")">
+                <a class="page-link" href="@PageUrl(Model.PageIndex - 1)" aria-label="Previous">&lsaquo;</a>
+            </li>
+
+            @if (start > 1)
+            {
+                <li class="page-item"><a class="page-link" href="@PageUrl(1)">1</a></li>
+                if (start > 2)
+                {
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                }
+            }
+
+            @for (var p = start; p <= end; p++)
+            {
+                <li class="page-item @(p == Model.PageIndex ? "active" : "")">
+                    <a class="page-link" href="@PageUrl(p)">@p</a>
+                </li>
+            }
+
+            @if (end < Model.TotalPages)
+            {
+                if (end < Model.TotalPages - 1)
+                {
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                }
+                <li class="page-item"><a class="page-link" href="@PageUrl(Model.TotalPages)">@Model.TotalPages</a></li>
+            }
+
+            <li class="page-item @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="@PageUrl(Model.PageIndex + 1)" aria-label="Next">&rsaquo;</a>
+            </li>
+        </ul>
+    </nav>
+}
