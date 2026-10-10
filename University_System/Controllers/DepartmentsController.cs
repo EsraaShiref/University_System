@@ -20,6 +20,7 @@ namespace University_System.Controllers
         // GET: /Departments?q=...&page=2
         public async Task<IActionResult> Index(string? q, int page = 1)
         {
+            q = SearchHelper.Clean(q);
             var query = _context.Departments.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
@@ -75,11 +76,12 @@ namespace University_System.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(DepartmentFormViewModel vm)
         {
+            await ValidateAsync(vm);
             if (!ModelState.IsValid) return View("Form", vm);
 
             var entity = new Department { Name = vm.Name.Trim(), Manager = vm.Manager.Trim() };
             _context.Departments.Add(entity);
-            await _context.SaveChangesAsync();
+            if (!await TrySaveAsync()) return View("Form", vm);
 
             TempData["Success"] = $"Department \"{entity.Name}\" was created.";
             return RedirectToAction(nameof(Details), new { id = entity.Id });
@@ -97,6 +99,7 @@ namespace University_System.Controllers
         public async Task<IActionResult> Edit(int id, DepartmentFormViewModel vm)
         {
             if (id != vm.Id) return BadRequest();
+            await ValidateAsync(vm);
             if (!ModelState.IsValid) return View("Form", vm);
 
             var d = await _context.Departments.FindAsync(id);
@@ -104,7 +107,7 @@ namespace University_System.Controllers
 
             d.Name = vm.Name.Trim();
             d.Manager = vm.Manager.Trim();
-            await _context.SaveChangesAsync();
+            if (!await TrySaveAsync()) return View("Form", vm);
 
             TempData["Success"] = $"Department \"{d.Name}\" was updated.";
             return RedirectToAction(nameof(Details), new { id });
@@ -127,10 +130,51 @@ namespace University_System.Controllers
             }
 
             _context.Departments.Remove(d);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Error"] = "The record could not be deleted because other data still depends on it.";
+                return RedirectToAction(nameof(Index));
+            }
 
             TempData["Success"] = $"Department \"{d.Name}\" was deleted.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // Remote validation: called by the browser while the user types (see [Remote] on the view model)
+        [AcceptVerbs("GET", "POST")]
+        public async Task<IActionResult> IsNameAvailable(string? name, int id)
+        {
+            name = name?.Trim() ?? "";
+            var taken = await _context.Departments.AnyAsync(d => d.Name == name && d.Id != id);
+            return Json(taken ? $"A department named \"{name}\" already exists." : true);
+        }
+
+        // Server-side rules that cannot be expressed as attributes
+        private async Task ValidateAsync(DepartmentFormViewModel vm)
+        {
+            var name = vm.Name?.Trim() ?? "";
+            if (await _context.Departments.AnyAsync(d => d.Name == name && d.Id != vm.Id))
+                ModelState.AddModelError(nameof(vm.Name), $"A department named \"{name}\" already exists.");
+        }
+
+        // Last line of defence: a unique index or check constraint rejected the data
+        private async Task<bool> TrySaveAsync()
+        {
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "The record could not be saved. A record with the same values may already exist, or a value is out of range.");
+                return false;
+            }
         }
     }
 }

@@ -26,6 +26,7 @@ namespace University_System.Controllers
         // GET: /Students?q=...&departmentId=...&page=2
         public async Task<IActionResult> Index(string? q, int? departmentId, int page = 1)
         {
+            q = SearchHelper.Clean(q);
             var query = _context.Trainees.AsNoTracking()
                 .Include(t => t.Department)
                 .AsQueryable();
@@ -83,14 +84,19 @@ namespace University_System.Controllers
             {
                 Name = vm.Name.Trim(),
                 Address = vm.Address.Trim(),
-                Grade = vm.Grade,
+                Grade = vm.Grade!.Value,
                 DepartmentId = vm.DepartmentId!.Value
             };
             if (vm.ImageFile is { Length: > 0 })
                 entity.Image = await ImageHelper.SaveAsync(vm.ImageFile, _env, ImageFolder);
 
             _context.Trainees.Add(entity);
-            await _context.SaveChangesAsync();
+            if (!await TrySaveAsync())
+            {
+                ImageHelper.DeleteUploaded(_env, ImageFolder, entity.Image);   // do not leave an orphan upload behind
+                await PopulateDepartmentsAsync(vm.DepartmentId);
+                return View("Form", vm);
+            }
 
             TempData["Success"] = $"Student \"{entity.Name}\" was created.";
             return RedirectToAction(nameof(Details), new { id = entity.Id });
@@ -132,7 +138,7 @@ namespace University_System.Controllers
             var oldImage = entity.Image;
             entity.Name = vm.Name.Trim();
             entity.Address = vm.Address.Trim();
-            entity.Grade = vm.Grade;
+            entity.Grade = vm.Grade!.Value;
             entity.DepartmentId = vm.DepartmentId!.Value;
 
             var replaced = false;
@@ -142,7 +148,13 @@ namespace University_System.Controllers
                 replaced = true;
             }
 
-            await _context.SaveChangesAsync();
+            if (!await TrySaveAsync())
+            {
+                if (replaced) ImageHelper.DeleteUploaded(_env, ImageFolder, entity.Image);
+                vm.Image = oldImage;
+                await PopulateDepartmentsAsync(vm.DepartmentId);
+                return View("Form", vm);
+            }
             if (replaced) ImageHelper.DeleteUploaded(_env, ImageFolder, oldImage);
 
             TempData["Success"] = $"Student \"{entity.Name}\" was updated.";
@@ -162,7 +174,15 @@ namespace University_System.Controllers
             }
 
             _context.Trainees.Remove(entity);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Error"] = "The record could not be deleted because other data still depends on it.";
+                return RedirectToAction(nameof(Index));
+            }
             ImageHelper.DeleteUploaded(_env, ImageFolder, entity.Image);
 
             TempData["Success"] = $"Student \"{entity.Name}\" was deleted.";
@@ -176,7 +196,7 @@ namespace University_System.Controllers
 
             if (vm.ImageFile is { Length: > 0 })
             {
-                var error = ImageHelper.Validate(vm.ImageFile);
+                var error = await ImageHelper.ValidateAsync(vm.ImageFile);
                 if (error != null) ModelState.AddModelError(nameof(vm.ImageFile), error);
             }
         }
@@ -188,6 +208,22 @@ namespace University_System.Controllers
                 .Select(d => new { d.Id, d.Name })
                 .ToListAsync();
             ViewData["Departments"] = new SelectList(items, "Id", "Name", selected);
+        }
+
+        // Last line of defence: a unique index or check constraint rejected the data
+        private async Task<bool> TrySaveAsync()
+        {
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "The record could not be saved. A record with the same values may already exist, or a value is out of range.");
+                return false;
+            }
         }
     }
 }

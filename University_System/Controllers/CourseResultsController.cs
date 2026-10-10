@@ -21,6 +21,7 @@ namespace University_System.Controllers
         // GET: /CourseResults?q=...&status=passed|failed&page=2
         public async Task<IActionResult> Index(string? q, string? status, int page = 1)
         {
+            q = SearchHelper.Clean(q);
             var query = _context.CourseResults.AsNoTracking()
                 .Include(r => r.Trainee)
                 .Include(r => r.Course)
@@ -75,10 +76,14 @@ namespace University_System.Controllers
             {
                 TraineeId = vm.TraineeId!.Value,
                 CourseId = vm.CourseId!.Value,
-                Degree = vm.Degree
+                Degree = vm.Degree!.Value
             };
             _context.CourseResults.Add(entity);
-            await _context.SaveChangesAsync();
+            if (!await TrySaveAsync())
+            {
+                await PopulateListsAsync(vm.TraineeId, vm.CourseId);
+                return View("Form", vm);
+            }
 
             TempData["Success"] = "Course result was created.";
             return RedirectToAction(nameof(Details), new { id = entity.Id });
@@ -116,8 +121,12 @@ namespace University_System.Controllers
 
             entity.TraineeId = vm.TraineeId!.Value;
             entity.CourseId = vm.CourseId!.Value;
-            entity.Degree = vm.Degree;
-            await _context.SaveChangesAsync();
+            entity.Degree = vm.Degree!.Value;
+            if (!await TrySaveAsync())
+            {
+                await PopulateListsAsync(vm.TraineeId, vm.CourseId);
+                return View("Form", vm);
+            }
 
             TempData["Success"] = "Course result was updated.";
             return RedirectToAction(nameof(Details), new { id });
@@ -130,10 +139,45 @@ namespace University_System.Controllers
             if (entity == null) return NotFound();
 
             _context.CourseResults.Remove(entity);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Error"] = "The record could not be deleted because other data still depends on it.";
+                return RedirectToAction(nameof(Index));
+            }
 
             TempData["Success"] = "Course result was deleted.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // Remote validation: one result per trainee and course
+        [AcceptVerbs("GET", "POST")]
+        public async Task<IActionResult> IsPairAvailable(int? courseId, int? traineeId, int id)
+        {
+            if (!courseId.HasValue || !traineeId.HasValue) return Json(true);
+
+            var exists = await _context.CourseResults.AnyAsync(r =>
+                r.TraineeId == traineeId.Value && r.CourseId == courseId.Value && r.Id != id);
+            return Json(exists ? "This trainee already has a result for this course." : true);
+        }
+
+        // Remote validation: the degree cannot exceed the course total
+        [AcceptVerbs("GET", "POST")]
+        public async Task<IActionResult> IsDegreeValid(int? degree, int? courseId)
+        {
+            if (!degree.HasValue || !courseId.HasValue) return Json(true);
+
+            var total = await _context.Courses.AsNoTracking()
+                .Where(c => c.Id == courseId.Value)
+                .Select(c => (int?)c.Degree)
+                .FirstOrDefaultAsync();
+
+            return Json(total.HasValue && degree.Value > total.Value
+                ? $"The degree cannot be greater than the course total ({total.Value})."
+                : true);
         }
 
         private async Task ValidateAsync(CourseResultFormViewModel vm)
@@ -174,6 +218,22 @@ namespace University_System.Controllers
 
             ViewData["Trainees"] = new SelectList(trainees, "Id", "Label", traineeId);
             ViewData["Courses"] = new SelectList(courses, "Id", "Label", courseId);
+        }
+
+        // Last line of defence: a unique index or check constraint rejected the data
+        private async Task<bool> TrySaveAsync()
+        {
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "The record could not be saved. A record with the same values may already exist, or a value is out of range.");
+                return false;
+            }
         }
     }
 }

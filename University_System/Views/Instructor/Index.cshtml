@@ -26,7 +26,7 @@
     </div>
 
     <form method="get" asp-action="Index" class="list-filters">
-        <input type="search" name="q" value="@q" class="form-control" placeholder="Search by name or address…" />
+        <input type="search" name="q" value="@q" class="form-control" maxlength="100" placeholder="Search by name or address…" />
         <select name="departmentId" class="form-select" asp-items="departments">
             <option value="">All departments</option>
         </select>

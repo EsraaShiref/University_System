@@ -25,6 +25,7 @@ namespace University_System.Controllers
         // GET: /Instructor?q=...&departmentId=...&page=2
         public async Task<IActionResult> Index(string? q, int? departmentId, int page = 1)
         {
+            q = SearchHelper.Clean(q);
             var query = _context.Instructors.AsNoTracking()
                 .Include(i => i.Department)
                 .Include(i => i.Course)
@@ -76,7 +77,7 @@ namespace University_System.Controllers
             var entity = new Instructor
             {
                 InsName = vm.InsName.Trim(),
-                Salary = vm.Salary,
+                Salary = vm.Salary!.Value,
                 Address = string.IsNullOrWhiteSpace(vm.Address) ? null : vm.Address.Trim(),
                 CourseId = course!.Id,
                 DepartmentId = course.DepartmentId   // an instructor belongs to the department of their course
@@ -85,7 +86,12 @@ namespace University_System.Controllers
                 entity.Img = await ImageHelper.SaveAsync(vm.ImageFile, _env, ImageFolder);
 
             _context.Instructors.Add(entity);
-            await _context.SaveChangesAsync();
+            if (!await TrySaveAsync())
+            {
+                ImageHelper.DeleteUploaded(_env, ImageFolder, entity.Img);   // do not leave an orphan upload behind
+                await PopulateCoursesAsync(vm.CourseId);
+                return View("Form", vm);
+            }
 
             TempData["Success"] = $"Instructor \"{entity.InsName}\" was created.";
             return RedirectToAction(nameof(Details), new { id = entity.Id });
@@ -126,7 +132,7 @@ namespace University_System.Controllers
 
             var oldImage = entity.Img;
             entity.InsName = vm.InsName.Trim();
-            entity.Salary = vm.Salary;
+            entity.Salary = vm.Salary!.Value;
             entity.Address = string.IsNullOrWhiteSpace(vm.Address) ? null : vm.Address.Trim();
             entity.CourseId = course!.Id;
             entity.DepartmentId = course.DepartmentId;
@@ -138,7 +144,13 @@ namespace University_System.Controllers
                 replaced = true;
             }
 
-            await _context.SaveChangesAsync();
+            if (!await TrySaveAsync())
+            {
+                if (replaced) ImageHelper.DeleteUploaded(_env, ImageFolder, entity.Img);
+                vm.Img = oldImage;
+                await PopulateCoursesAsync(vm.CourseId);
+                return View("Form", vm);
+            }
             if (replaced) ImageHelper.DeleteUploaded(_env, ImageFolder, oldImage);
 
             TempData["Success"] = $"Instructor \"{entity.InsName}\" was updated.";
@@ -152,7 +164,15 @@ namespace University_System.Controllers
             if (entity == null) return NotFound();
 
             _context.Instructors.Remove(entity);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Error"] = "The record could not be deleted because other data still depends on it.";
+                return RedirectToAction(nameof(Index));
+            }
             ImageHelper.DeleteUploaded(_env, ImageFolder, entity.Img);
 
             TempData["Success"] = $"Instructor \"{entity.InsName}\" was deleted.";
@@ -171,7 +191,7 @@ namespace University_System.Controllers
 
             if (vm.ImageFile is { Length: > 0 })
             {
-                var error = ImageHelper.Validate(vm.ImageFile);
+                var error = await ImageHelper.ValidateAsync(vm.ImageFile);
                 if (error != null) ModelState.AddModelError(nameof(vm.ImageFile), error);
             }
             return course;
@@ -193,6 +213,22 @@ namespace University_System.Controllers
                 .Select(d => new { d.Id, d.Name })
                 .ToListAsync();
             ViewData["Departments"] = new SelectList(items, "Id", "Name", selected);
+        }
+
+        // Last line of defence: a unique index or check constraint rejected the data
+        private async Task<bool> TrySaveAsync()
+        {
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "The record could not be saved. A record with the same values may already exist, or a value is out of range.");
+                return false;
+            }
         }
     }
 }

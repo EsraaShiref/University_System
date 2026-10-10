@@ -24,7 +24,7 @@
     </div>
 
     <form method="get" asp-action="Index" class="list-filters">
-        <input type="search" name="q" value="@q" class="form-control" placeholder="Search by department or manager…" />
+        <input type="search" name="q" value="@q" class="form-control" maxlength="100" placeholder="Search by department or manager…" />
         <button type="submit" class="btn btn-primary">Search</button>
         @if (filtered)
         {

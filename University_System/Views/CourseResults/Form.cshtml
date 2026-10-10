@@ -28,14 +28,14 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 var(--space-6);">
             <div class="form-group">
                 <label asp-for="TraineeId" class="form-label"></label>
-                <select asp-for="TraineeId" asp-items="trainees" class="form-select">
+                <select asp-for="TraineeId" asp-items="trainees" class="form-select" data-revalidate="CourseId">
                     <option value="">Select a trainee…</option>
                 </select>
                 <span asp-validation-for="TraineeId" class="text-danger" style="font-size:var(--text-sm);"></span>
             </div>
             <div class="form-group">
                 <label asp-for="CourseId" class="form-label"></label>
-                <select asp-for="CourseId" asp-items="courses" class="form-select">
+                <select asp-for="CourseId" asp-items="courses" class="form-select" data-revalidate="Degree">
                     <option value="">Select a course…</option>
                 </select>
                 <span asp-validation-for="CourseId" class="text-danger" style="font-size:var(--text-sm);"></span>

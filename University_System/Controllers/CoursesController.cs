@@ -21,6 +21,7 @@ namespace University_System.Controllers
         // GET: /Courses?q=...&departmentId=...&page=2
         public async Task<IActionResult> Index(string? q, int? departmentId, int page = 1)
         {
+            q = SearchHelper.Clean(q);
             var query = _context.Courses.AsNoTracking()
                 .Include(c => c.Department)
                 .Include(c => c.Instructors)
@@ -73,12 +74,16 @@ namespace University_System.Controllers
             var entity = new Course
             {
                 Name = vm.Name.Trim(),
-                Degree = vm.Degree,
-                MinDegree = vm.MinDegree,
+                Degree = vm.Degree!.Value,
+                MinDegree = vm.MinDegree!.Value,
                 DepartmentId = vm.DepartmentId!.Value
             };
             _context.Courses.Add(entity);
-            await _context.SaveChangesAsync();
+            if (!await TrySaveAsync())
+            {
+                await PopulateDepartmentsAsync(vm.DepartmentId);
+                return View("Form", vm);
+            }
 
             TempData["Success"] = $"Course \"{entity.Name}\" was created.";
             return RedirectToAction(nameof(Details), new { id = entity.Id });
@@ -116,10 +121,14 @@ namespace University_System.Controllers
             if (c == null) return NotFound();
 
             c.Name = vm.Name.Trim();
-            c.Degree = vm.Degree;
-            c.MinDegree = vm.MinDegree;
+            c.Degree = vm.Degree!.Value;
+            c.MinDegree = vm.MinDegree!.Value;
             c.DepartmentId = vm.DepartmentId!.Value;
-            await _context.SaveChangesAsync();
+            if (!await TrySaveAsync())
+            {
+                await PopulateDepartmentsAsync(vm.DepartmentId);
+                return View("Form", vm);
+            }
 
             TempData["Success"] = $"Course \"{c.Name}\" was updated.";
             return RedirectToAction(nameof(Details), new { id });
@@ -141,14 +150,38 @@ namespace University_System.Controllers
             }
 
             _context.Courses.Remove(c);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Error"] = "The record could not be deleted because other data still depends on it.";
+                return RedirectToAction(nameof(Index));
+            }
 
             TempData["Success"] = $"Course \"{c.Name}\" was deleted.";
             return RedirectToAction(nameof(Index));
         }
 
+        // Remote validation: a course name must be unique inside its department
+        [AcceptVerbs("GET", "POST")]
+        public async Task<IActionResult> IsNameAvailable(string? name, int? departmentId, int id)
+        {
+            name = name?.Trim() ?? "";
+            if (!departmentId.HasValue) return Json(true);
+
+            var taken = await _context.Courses.AnyAsync(c => c.Name == name && c.DepartmentId == departmentId.Value && c.Id != id);
+            return Json(taken ? $"This department already has a course named \"{name}\"." : true);
+        }
+
         private async Task ValidateAsync(CourseFormViewModel vm)
         {
+            var name = vm.Name?.Trim() ?? "";
+            if (vm.DepartmentId.HasValue &&
+                await _context.Courses.AnyAsync(c => c.Name == name && c.DepartmentId == vm.DepartmentId.Value && c.Id != vm.Id))
+                ModelState.AddModelError(nameof(vm.Name), $"This department already has a course named \"{name}\".");
+
             if (vm.MinDegree > vm.Degree)
                 ModelState.AddModelError(nameof(vm.MinDegree), "Minimum degree cannot be greater than the total degree.");
 
@@ -163,6 +196,22 @@ namespace University_System.Controllers
                 .Select(d => new { d.Id, d.Name })
                 .ToListAsync();
             ViewData["Departments"] = new SelectList(items, "Id", "Name", selected);
+        }
+
+        // Last line of defence: a unique index or check constraint rejected the data
+        private async Task<bool> TrySaveAsync()
+        {
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "The record could not be saved. A record with the same values may already exist, or a value is out of range.");
+                return false;
+            }
         }
     }
 }

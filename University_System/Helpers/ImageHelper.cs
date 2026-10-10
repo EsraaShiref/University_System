@@ -10,15 +10,38 @@ namespace University_System.Helpers
         // Files saved by the app are named <32 hex chars>.<ext>
         private static readonly Regex UploadedName = new("^[0-9a-f]{32}\\.[a-z]+$", RegexOptions.Compiled);
 
-        /// <summary>Returns an error message, or null when the file is acceptable.</summary>
-        public static string? Validate(IFormFile file)
+        /// <summary>
+        /// Server-side check: extension, size and the real file signature (so a renamed .exe is rejected).
+        /// Returns an error message, or null when the file is acceptable.
+        /// </summary>
+        public static async Task<string?> ValidateAsync(IFormFile file)
         {
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!AllowedExtensions.Contains(ext))
                 return "Only JPG, PNG, WEBP or GIF images are allowed.";
+            if (file.Length == 0)
+                return "The selected file is empty.";
             if (file.Length > MaxBytes)
-                return "The image must be 2 MB or smaller.";
-            return null;
+                return "The photo must be 2 MB or smaller.";
+
+            var header = new byte[12];
+            await using var stream = file.OpenReadStream();
+            var read = await stream.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false);
+
+            return HasImageSignature(header, read) ? null : "The file is not a valid image.";
+        }
+
+        private static bool HasImageSignature(byte[] h, int length)
+        {
+            if (length < 12) return false;
+
+            var jpeg = h[0] == 0xFF && h[1] == 0xD8 && h[2] == 0xFF;
+            var png = h[0] == 0x89 && h[1] == 0x50 && h[2] == 0x4E && h[3] == 0x47;
+            var gif = h[0] == 'G' && h[1] == 'I' && h[2] == 'F' && h[3] == '8';
+            var webp = h[0] == 'R' && h[1] == 'I' && h[2] == 'F' && h[3] == 'F'
+                    && h[8] == 'W' && h[9] == 'E' && h[10] == 'B' && h[11] == 'P';
+
+            return jpeg || png || gif || webp;
         }
 
         /// <summary>Saves the file under wwwroot/images/{folder} and returns the stored file name.</summary>

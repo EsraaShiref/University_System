@@ -40,13 +40,18 @@ namespace University_System.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DepartmentId");
+                    b.HasIndex("DepartmentId", "Name")
+                        .IsUnique();
 
-                    b.ToTable("Courses");
+                    b.ToTable("Courses", t =>
+                        {
+                            t.HasCheckConstraint("CK_Courses_MinDegree_LessOrEqual_Degree", "[MinDegree] <= [Degree]");
+                        });
                 });
 
             modelBuilder.Entity("University_System.Models.CourseResult", b =>
@@ -70,9 +75,13 @@ namespace University_System.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.HasIndex("TraineeId");
+                    b.HasIndex("TraineeId", "CourseId")
+                        .IsUnique();
 
-                    b.ToTable("CourseResults");
+                    b.ToTable("CourseResults", t =>
+                        {
+                            t.HasCheckConstraint("CK_CourseResults_Degree_NotNegative", "[Degree] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("University_System.Models.Department", b =>
@@ -85,13 +94,18 @@ namespace University_System.Migrations
 
                     b.Property<string>("Manager")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("Departments");
                 });
@@ -105,7 +119,8 @@ namespace University_System.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("CourseId")
                         .HasColumnType("int");
@@ -114,11 +129,13 @@ namespace University_System.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Img")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
 
                     b.Property<string>("InsName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("Salary")
                         .HasColumnType("decimal(18,2)");
@@ -129,7 +146,10 @@ namespace University_System.Migrations
 
                     b.HasIndex("DepartmentId");
 
-                    b.ToTable("Instructors");
+                    b.ToTable("Instructors", t =>
+                        {
+                            t.HasCheckConstraint("CK_Instructors_Salary_NotNegative", "[Salary] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("University_System.Models.Trainee", b =>
@@ -142,7 +162,8 @@ namespace University_System.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("DepartmentId")
                         .HasColumnType("int");
@@ -151,17 +172,22 @@ namespace University_System.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Image")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("DepartmentId");
 
-                    b.ToTable("Trainees");
+                    b.ToTable("Trainees", t =>
+                        {
+                            t.HasCheckConstraint("CK_Trainees_Grade_Range", "[Grade] BETWEEN 0 AND 100");
+                        });
                 });
 
             modelBuilder.Entity("University_System.Models.Course", b =>

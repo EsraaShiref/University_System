@@ -2647,3 +2647,40 @@ table.table {
         padding: var(--space-4);
     }
 }
+
+
+/* ==========================================================================
+   21. VALIDATION STATES (jQuery Validate + ASP.NET unobtrusive classes)
+   ========================================================================== */
+
+.input-validation-error,
+.form-control.input-validation-error,
+.form-select.input-validation-error {
+    border-color: var(--danger) !important;
+    background-color: var(--danger-bg);
+}
+
+    .input-validation-error:focus {
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+    }
+
+.field-validation-error {
+    display: block;
+    margin-top: var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--danger);
+}
+
+.field-validation-valid,
+.validation-summary-valid {
+    display: none;
+}
+
+.validation-summary-errors ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.required-mark {
+    margin-left: 2px;
+}

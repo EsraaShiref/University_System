@@ -9,7 +9,11 @@ namespace University_System
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews(options =>
+            {
+                // Reject every POST/PUT/DELETE that does not carry a valid anti-forgery token
+                options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+            });
 
             // Session needs a backing store; in-memory is fine for development.
             builder.Services.AddDistributedMemoryCache();
